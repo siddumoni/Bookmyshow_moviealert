@@ -1,110 +1,105 @@
-# Movie-Alert
+# BookMyShow Movie Alert 🎬
 
-Get a **Telegram** ping the moment a specific **movie + theatre + date** opens
-for booking on BookMyShow. Runs on **GitHub Actions**, triggered every ~10 min
-by **cron-job.org** — nothing to keep running on your own machine.
+Automatically pings you on **Telegram** the second a movie opens for
+booking on BookMyShow — no more manually refreshing the page every hour
+hoping tickets dropped. Runs completely hands-free on **GitHub Actions**,
+triggered periodically by **cron-job.org**.
 
-<img width="1220" height="1076" alt="Media" src="https://github.com/user-attachments/assets/3c6a8f8e-5458-42a5-a870-9001a9990de3" />
+<img width="813" height="909" alt="Screenshot_2026-07-20-01-26-00-066_org telegram messenger" src="https://github.com/user-attachments/assets/612b99b0-ccdd-4af2-bc26-f2c462d0092f" />
 
 
-## How it works
+## What it actually does
 
-1. **cron-job.org** triggers the workflow every ~10 min (GitHub's own scheduler
-   is unreliable, so we trigger it externally).
-2. `poller.py` fetches the BMS page through **ScraperAPI** (an India IP — BMS
-   blocks foreign/datacenter IPs and returns 403 otherwise).
-3. It checks whether your target is open and, on the `False → True` flip, sends
-   one Telegram message. Last-seen state lives in `state.json`.
+1. **cron-job.org** pings this repo's GitHub Actions workflow on a timer.
+2. `poller.py` loads the target movie's BookMyShow page through
+   **ScraperAPI** (routes the request via an Indian IP, since BMS blocks
+   foreign/datacenter traffic and throws a 403 otherwise).
+3. It checks if your target has opened for booking. The instant it flips
+   from closed → open, you get exactly one Telegram message — after that
+   it stays quiet (state is remembered in `state.json`).
 
-## 1. Telegram bot
+## Setup
 
-- Message **@BotFather** → `/newbot` → copy the **token**.
-- Send your new bot any message, then open
-  `https://api.telegram.org/bot<TOKEN>/getUpdates` and copy the `chat.id` — that's
-  your **chat id**.
+### Step 1 — Telegram bot
+Message **@BotFather** on Telegram, run `/newbot`, and save the token it
+gives you. Then message your new bot once, and open
+`https://api.telegram.org/bot<TOKEN>/getUpdates` to grab your chat ID
+from the response.
 
-## 2. ScraperAPI key
+### Step 2 — ScraperAPI key
+Free account at **scraperapi.com** → copy the API key from your dashboard.
 
-Sign up at **scraperapi.com** (free tier) and copy your API key.
-
-## 3. Add repo secrets
-
-**Settings → Secrets and variables → Actions:**
-
+### Step 3 — Repo secrets
+**Settings → Secrets and variables → Actions**, add:
 - `TELEGRAM_BOT_TOKEN`
 - `TELEGRAM_CHAT_ID`
 - `SCRAPERAPI_KEY`
 
-## 4. Configure `config.json`
+### Step 4 — Point it at your movie
+Edit `config.json`:
 
-Pick a `detector`. The page URL is built from `url_template` + `requested_date`.
-After editing, reset `state.json` to `{"available": false}`.
-
-**`venue_date`** — a specific theatre opens for a specific date (most precise):
+**Watching one specific theatre (`venue_date`):**
 ```json
 {
   "detector": "venue_date",
-  "movie": "The Odyssey (IMAX 2D)",
-  "requested_date": "20260722",
-  "venue_code": "INPR",
-  "venue_label": "INOX: LUXE Phoenix Market City, Velachery",
-  "url_template": "https://in.bookmyshow.com/movies/chennai/the-odyssey/buytickets/ET00480917/{date}"
+  "movie": "Movie Name Here",
+  "requested_date": "20260731",
+  "venue_code": "XXXX",
+  "venue_label": "Cinema Name, Area",
+  "url_template": "https://in.bookmyshow.com/movies/<city>/<slug>/buytickets/<ETcode>/{date}"
 }
 ```
-Use `"venue_codes": ["PVPZ","INPR"]` to fire when *any* of several theatres open.
 
-**`bms_date`** — a date opens at *any* theatre (date-dominance on the page):
+**Watching a date at any theatre (`bms_date`):**
 ```json
-{ "detector": "bms_date", "requested_date": "20260722",
-  "url_template": ".../buytickets/ET00480917/{date}", "min_references": 10 }
+{
+  "detector": "bms_date",
+  "movie": "Movie Name Here",
+  "requested_date": "20260731",
+  "url_template": "https://in.bookmyshow.com/movies/<city>/<slug>/buytickets/<ETcode>/{date}",
+  "min_references": 10
+}
 ```
 
-**Finding the values:** read `<city>/<slug>/<ETcode>/<date>` from the movie's
-"Book tickets" URL. For `venue_code`, open a date where the theatre *is* open and
-read its cinema link `.../cinemas/<city>/<venue-slug>/buytickets/<CODE>/<date>` —
-the `<CODE>` (e.g. `PVPZ`, `INPR`) is the value.
+Grab `<city>/<slug>/<ETcode>` from the movie's own "Book tickets" URL on
+BMS. For a theatre-specific `venue_code`, open a date where that theatre
+already has live shows and copy the code from its cinema link
+(`.../cinemas/<city>/<venue-slug>/buytickets/<CODE>/<date>`).
 
-## 5. Schedule it with cron-job.org
+After editing, reset `state.json` back to `{"available": false}`.
 
-**a. GitHub token** — *Settings → Developer settings → Personal access tokens →
-Fine-grained tokens → Generate*. Scope it to this repo, permission
-**Actions: Read and write**. Copy the token.
+### Step 5 — Automate the trigger
+GitHub's built-in `schedule` trigger is unreliable for short intervals,
+so this repo is instead triggered externally by **cron-job.org**:
 
-**b. cron-job.org** — create a cronjob:
+1. Generate a fine-grained GitHub token (**Settings → Developer settings
+   → Personal access tokens**), scoped to this repo only, with
+   **Actions: Read and write** permission.
+2. On cron-job.org, create a job:
 
 | Field | Value |
 |---|---|
 | URL | `https://api.github.com/repos/<you>/<repo>/actions/workflows/booking-watch.yml/dispatches` |
-| Schedule | every 10 minutes |
+| Schedule | every 10 min |
 | Method | `POST` |
-| Header | `Accept: application/vnd.github+json` |
-| Header | `Authorization: Bearer <your-token>` |
-| Header | `X-GitHub-Api-Version: 2022-11-28` |
+| Headers | `Accept: application/vnd.github+json`, `Authorization: Bearer <token>`, `X-GitHub-Api-Version: 2022-11-28` |
 | Body | `{"ref":"main"}` |
 
-Save, then **Run now**. GitHub returns `204`; a run appears under **Actions**.
-From then on it fires every 10 min. Keep the token only in cron-job.org.
+Save, hit **Run now** once to verify it returns `204`, and you're live.
 
-## Geo-block (why ScraperAPI)
+## Why the ScraperAPI detour?
 
-BMS only serves India and blocks datacenter IPs, so GitHub's US runners get a
-**403** on a direct request. `SCRAPERAPI_KEY` routes through an India IP and fixes
-it. Alternatives: set a `PROXY_URL` secret (India proxy), or run from a machine in
-India. It's IP/geo-based — headers alone won't get past it.
-
-## Reuse it (fork)
-
-Fork the repo, **enable Actions** on the fork (off by default), add your own
-secrets, edit `config.json`, reset `state.json`, and set up your own cron-job.org
-trigger. Each fork is independent with its own Telegram chat. No branches needed —
-date-only vs theatre-specific is just the `detector` field.
+BookMyShow serves India-only and blocks datacenter IPs outright — GitHub's
+US-based runners get a flat 403 without it. `SCRAPERAPI_KEY` fixes this by
+routing the request through an Indian IP. A `PROXY_URL` secret (any
+India-based proxy) works as a drop-in alternative.
 
 ## Files
 
 | File | Purpose |
 |------|---------|
-| `poller.py` | Fetch page, detect availability, send Telegram alert |
-| `config.json` | Your movie / date / theatre target |
-| `.github/workflows/booking-watch.yml` | The runner (dispatched by cron-job.org) |
-| `requirements.txt` | Python deps (`requests`) |
-| `state.json` | Auto-managed; tracks last-seen availability |
+| `poller.py` | Fetches the page, runs the detector, sends the alert |
+| `config.json` | Your movie / theatre / date target |
+| `.github/workflows/booking-watch.yml` | The scheduled runner |
+| `requirements.txt` | Python dependency (`requests`) |
+| `state.json` | Tracks last-seen availability so alerts don't repeat |
