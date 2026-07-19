@@ -1,0 +1,9 @@
+{
+  "detector": "venue_date",
+  "movie": "The Odyssey (IMAX 2D)",
+  "requested_date": "20260722",
+  "venue_code": "INPR",
+  "venue_label": "INOX: LUXE Phoenix Market City, Velachery",
+  "url_template": "https://in.bookmyshow.com/movies/chennai/the-odyssey/buytickets/ET00480917/{date}",
+  "min_references": 10
+}
