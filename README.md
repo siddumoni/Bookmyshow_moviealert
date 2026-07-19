@@ -5,7 +5,7 @@ booking on BookMyShow — no more manually refreshing the page every hour
 hoping tickets dropped. Runs completely hands-free on **GitHub Actions**,
 triggered periodically by **cron-job.org**.
 
-<img width="813" height="909" alt="Screenshot_2026-07-20-01-26-00-066_org telegram messenger" src="https://github.com/user-attachments/assets/612b99b0-ccdd-4af2-bc26-f2c462d0092f" />
+<img width="1012" height="1049" alt="Screenshot_2026-07-20-02-21-41-677_org telegram messenger" src="https://github.com/user-attachments/assets/fa2c2856-bf6e-4d54-9193-4452bb419b69" />
 
 
 ## What it actually does
