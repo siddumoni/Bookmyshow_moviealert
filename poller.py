@@ -113,18 +113,6 @@ def notify_telegram(bot_token, chat_id, message):
     )
     response.raise_for_status()
 
-def notify_ntfy(topic, title, message):
-    requests.post(
-        f"https://ntfy.sh/{topic}",
-        data=message.encode(),
-        headers={
-            "Title": title,
-            "Priority": "5",
-            "Tags": "warning,movie",
-        },
-        timeout=30,
-    ).raise_for_status()
-
 
 def grab_page(settings):
     """
@@ -291,14 +279,6 @@ def run():
             settings["telegram_chat_id"],
             build_alert_text(settings),
         )
-
-        topic = os.getenv("NTFY_TOPIC")
-if topic:
-    notify_ntfy(
-        topic,
-        "🎬 Tickets Live!",
-        build_alert_text(settings)
-    )
         print(f"[watch] {watch_label} -- alert sent")
 
     if open_now != memory.get("available"):
