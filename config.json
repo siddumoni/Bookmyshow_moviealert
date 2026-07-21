@@ -1,7 +1,7 @@
 {
   "detector": "venue_date",
   "movie": "Jana Nayagan",
-  "requested_date": "20260724",
+  "requested_date": "20260723",
   "venue_code": "INPT",
   "venue_label": "INOX: Prozone Mall, Coimbatore",
   "url_template": "https://in.bookmyshow.com/movies/coimbatore/jana-nayagan/buytickets/ET00430817/{date}"
