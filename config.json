@@ -1,7 +1,7 @@
 {
   "detector": "bms_date",
-  "movie": "Spider-Man: Brand New Day",
-  "requested_date": "20260730",
-  "url_template": "https://in.bookmyshow.com/movies/chennai/spider-man-brand-new-day/buytickets/ET00502600/{date}",
-  "min_references": 10
+  "movie": "Jana Nayagan",
+  "requested_date": "20260725",
+  "url_template": "https://in.bookmyshow.com/movies/coimbatore/jana-nayagan/buytickets/ET00430817/{date}",
+  "min_references": 5
 }
